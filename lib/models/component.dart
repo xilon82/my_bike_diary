@@ -7,16 +7,26 @@ part 'component.g.dart';
 class Component {
   Id id = Isar.autoIncrement;
   late String name;
-  int? maintenanceIntervalDays; 
-  DateTime lastMaintenanceDate = DateTime.now();
-  DateTime purchaseDate = DateTime.now();
+  String? type;          // Es: Catena, Copertone, Pastiglie
+  String? modelDetails;  // Es: Shimano HG-601
   
+  int? maintenanceIntervalDays; 
+  DateTime purchaseDate = DateTime.now(); 
+  DateTime? lastMaintenanceDate;
+  
+  bool isMounted = true; 
+  DateTime? unmountedDate;
+
   final bike = IsarLink<Bike>();
 
-  // Helper per sapere se è scaduta la manutenzione
+  @ignore
   bool get isMaintenanceDue {
-    if (maintenanceIntervalDays == null) return false;
-    final dueDate = lastMaintenanceDate.add(Duration(days: maintenanceIntervalDays!));
-    return DateTime.now().isAfter(dueDate);
+    // Se non è montato o non c'è intervallo, niente avvisi
+    if (!isMounted || maintenanceIntervalDays == null) return false;
+    
+    final baseDate = lastMaintenanceDate ?? purchaseDate;
+    final nextMaintenance = baseDate.add(Duration(days: maintenanceIntervalDays!));
+    
+    return DateTime.now().isAfter(nextMaintenance);
   }
 }

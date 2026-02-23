@@ -17,9 +17,9 @@ const ComponentSchema = CollectionSchema(
   name: r'Component',
   id: -8356918290272001147,
   properties: {
-    r'isMaintenanceDue': PropertySchema(
+    r'isMounted': PropertySchema(
       id: 0,
-      name: r'isMaintenanceDue',
+      name: r'isMounted',
       type: IsarType.bool,
     ),
     r'lastMaintenanceDate': PropertySchema(
@@ -32,14 +32,29 @@ const ComponentSchema = CollectionSchema(
       name: r'maintenanceIntervalDays',
       type: IsarType.long,
     ),
-    r'name': PropertySchema(
+    r'modelDetails': PropertySchema(
       id: 3,
+      name: r'modelDetails',
+      type: IsarType.string,
+    ),
+    r'name': PropertySchema(
+      id: 4,
       name: r'name',
       type: IsarType.string,
     ),
     r'purchaseDate': PropertySchema(
-      id: 4,
+      id: 5,
       name: r'purchaseDate',
+      type: IsarType.dateTime,
+    ),
+    r'type': PropertySchema(
+      id: 6,
+      name: r'type',
+      type: IsarType.string,
+    ),
+    r'unmountedDate': PropertySchema(
+      id: 7,
+      name: r'unmountedDate',
       type: IsarType.dateTime,
     )
   },
@@ -70,7 +85,19 @@ int _componentEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  {
+    final value = object.modelDetails;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.type;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   return bytesCount;
 }
 
@@ -80,11 +107,14 @@ void _componentSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeBool(offsets[0], object.isMaintenanceDue);
+  writer.writeBool(offsets[0], object.isMounted);
   writer.writeDateTime(offsets[1], object.lastMaintenanceDate);
   writer.writeLong(offsets[2], object.maintenanceIntervalDays);
-  writer.writeString(offsets[3], object.name);
-  writer.writeDateTime(offsets[4], object.purchaseDate);
+  writer.writeString(offsets[3], object.modelDetails);
+  writer.writeString(offsets[4], object.name);
+  writer.writeDateTime(offsets[5], object.purchaseDate);
+  writer.writeString(offsets[6], object.type);
+  writer.writeDateTime(offsets[7], object.unmountedDate);
 }
 
 Component _componentDeserialize(
@@ -95,10 +125,14 @@ Component _componentDeserialize(
 ) {
   final object = Component();
   object.id = id;
-  object.lastMaintenanceDate = reader.readDateTime(offsets[1]);
+  object.isMounted = reader.readBool(offsets[0]);
+  object.lastMaintenanceDate = reader.readDateTimeOrNull(offsets[1]);
   object.maintenanceIntervalDays = reader.readLongOrNull(offsets[2]);
-  object.name = reader.readString(offsets[3]);
-  object.purchaseDate = reader.readDateTime(offsets[4]);
+  object.modelDetails = reader.readStringOrNull(offsets[3]);
+  object.name = reader.readString(offsets[4]);
+  object.purchaseDate = reader.readDateTime(offsets[5]);
+  object.type = reader.readStringOrNull(offsets[6]);
+  object.unmountedDate = reader.readDateTimeOrNull(offsets[7]);
   return object;
 }
 
@@ -112,13 +146,19 @@ P _componentDeserializeProp<P>(
     case 0:
       return (reader.readBool(offset)) as P;
     case 1:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readDateTimeOrNull(offset)) as P;
     case 2:
       return (reader.readLongOrNull(offset)) as P;
     case 3:
-      return (reader.readString(offset)) as P;
+      return (reader.readStringOrNull(offset)) as P;
     case 4:
+      return (reader.readString(offset)) as P;
+    case 5:
       return (reader.readDateTime(offset)) as P;
+    case 6:
+      return (reader.readStringOrNull(offset)) as P;
+    case 7:
+      return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -269,18 +309,36 @@ extension ComponentQueryFilter
     });
   }
 
-  QueryBuilder<Component, Component, QAfterFilterCondition>
-      isMaintenanceDueEqualTo(bool value) {
+  QueryBuilder<Component, Component, QAfterFilterCondition> isMountedEqualTo(
+      bool value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'isMaintenanceDue',
+        property: r'isMounted',
         value: value,
       ));
     });
   }
 
   QueryBuilder<Component, Component, QAfterFilterCondition>
-      lastMaintenanceDateEqualTo(DateTime value) {
+      lastMaintenanceDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'lastMaintenanceDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      lastMaintenanceDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'lastMaintenanceDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      lastMaintenanceDateEqualTo(DateTime? value) {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(FilterCondition.equalTo(
         property: r'lastMaintenanceDate',
@@ -291,7 +349,7 @@ extension ComponentQueryFilter
 
   QueryBuilder<Component, Component, QAfterFilterCondition>
       lastMaintenanceDateGreaterThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -305,7 +363,7 @@ extension ComponentQueryFilter
 
   QueryBuilder<Component, Component, QAfterFilterCondition>
       lastMaintenanceDateLessThan(
-    DateTime value, {
+    DateTime? value, {
     bool include = false,
   }) {
     return QueryBuilder.apply(this, (query) {
@@ -319,8 +377,8 @@ extension ComponentQueryFilter
 
   QueryBuilder<Component, Component, QAfterFilterCondition>
       lastMaintenanceDateBetween(
-    DateTime lower,
-    DateTime upper, {
+    DateTime? lower,
+    DateTime? upper, {
     bool includeLower = true,
     bool includeUpper = true,
   }) {
@@ -405,6 +463,159 @@ extension ComponentQueryFilter
         includeLower: includeLower,
         upper: upper,
         includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'modelDetails',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'modelDetails',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> modelDetailsEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> modelDetailsBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'modelDetails',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'modelDetails',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> modelDetailsMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'modelDetails',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'modelDetails',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      modelDetailsIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'modelDetails',
+        value: '',
       ));
     });
   }
@@ -593,6 +804,226 @@ extension ComponentQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'type',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'type',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'type',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeContains(
+      String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'type',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeMatches(
+      String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'type',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'type',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> typeIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'type',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNull(
+        property: r'unmountedDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(const FilterCondition.isNotNull(
+        property: r'unmountedDate',
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateEqualTo(DateTime? value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'unmountedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateGreaterThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'unmountedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateLessThan(
+    DateTime? value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'unmountedDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      unmountedDateBetween(
+    DateTime? lower,
+    DateTime? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'unmountedDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension ComponentQueryObject
@@ -615,16 +1046,15 @@ extension ComponentQueryLinks
 }
 
 extension ComponentQuerySortBy on QueryBuilder<Component, Component, QSortBy> {
-  QueryBuilder<Component, Component, QAfterSortBy> sortByIsMaintenanceDue() {
+  QueryBuilder<Component, Component, QAfterSortBy> sortByIsMounted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isMaintenanceDue', Sort.asc);
+      return query.addSortBy(r'isMounted', Sort.asc);
     });
   }
 
-  QueryBuilder<Component, Component, QAfterSortBy>
-      sortByIsMaintenanceDueDesc() {
+  QueryBuilder<Component, Component, QAfterSortBy> sortByIsMountedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isMaintenanceDue', Sort.desc);
+      return query.addSortBy(r'isMounted', Sort.desc);
     });
   }
 
@@ -655,6 +1085,18 @@ extension ComponentQuerySortBy on QueryBuilder<Component, Component, QSortBy> {
     });
   }
 
+  QueryBuilder<Component, Component, QAfterSortBy> sortByModelDetails() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'modelDetails', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByModelDetailsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'modelDetails', Sort.desc);
+    });
+  }
+
   QueryBuilder<Component, Component, QAfterSortBy> sortByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -678,6 +1120,30 @@ extension ComponentQuerySortBy on QueryBuilder<Component, Component, QSortBy> {
       return query.addSortBy(r'purchaseDate', Sort.desc);
     });
   }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByUnmountedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unmountedDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByUnmountedDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unmountedDate', Sort.desc);
+    });
+  }
 }
 
 extension ComponentQuerySortThenBy
@@ -694,16 +1160,15 @@ extension ComponentQuerySortThenBy
     });
   }
 
-  QueryBuilder<Component, Component, QAfterSortBy> thenByIsMaintenanceDue() {
+  QueryBuilder<Component, Component, QAfterSortBy> thenByIsMounted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isMaintenanceDue', Sort.asc);
+      return query.addSortBy(r'isMounted', Sort.asc);
     });
   }
 
-  QueryBuilder<Component, Component, QAfterSortBy>
-      thenByIsMaintenanceDueDesc() {
+  QueryBuilder<Component, Component, QAfterSortBy> thenByIsMountedDesc() {
     return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'isMaintenanceDue', Sort.desc);
+      return query.addSortBy(r'isMounted', Sort.desc);
     });
   }
 
@@ -734,6 +1199,18 @@ extension ComponentQuerySortThenBy
     });
   }
 
+  QueryBuilder<Component, Component, QAfterSortBy> thenByModelDetails() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'modelDetails', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByModelDetailsDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'modelDetails', Sort.desc);
+    });
+  }
+
   QueryBuilder<Component, Component, QAfterSortBy> thenByName() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'name', Sort.asc);
@@ -757,13 +1234,37 @@ extension ComponentQuerySortThenBy
       return query.addSortBy(r'purchaseDate', Sort.desc);
     });
   }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByType() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByTypeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'type', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByUnmountedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unmountedDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByUnmountedDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'unmountedDate', Sort.desc);
+    });
+  }
 }
 
 extension ComponentQueryWhereDistinct
     on QueryBuilder<Component, Component, QDistinct> {
-  QueryBuilder<Component, Component, QDistinct> distinctByIsMaintenanceDue() {
+  QueryBuilder<Component, Component, QDistinct> distinctByIsMounted() {
     return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'isMaintenanceDue');
+      return query.addDistinctBy(r'isMounted');
     });
   }
 
@@ -781,6 +1282,13 @@ extension ComponentQueryWhereDistinct
     });
   }
 
+  QueryBuilder<Component, Component, QDistinct> distinctByModelDetails(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'modelDetails', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Component, Component, QDistinct> distinctByName(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -793,6 +1301,19 @@ extension ComponentQueryWhereDistinct
       return query.addDistinctBy(r'purchaseDate');
     });
   }
+
+  QueryBuilder<Component, Component, QDistinct> distinctByType(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'type', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Component, Component, QDistinct> distinctByUnmountedDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'unmountedDate');
+    });
+  }
 }
 
 extension ComponentQueryProperty
@@ -803,13 +1324,13 @@ extension ComponentQueryProperty
     });
   }
 
-  QueryBuilder<Component, bool, QQueryOperations> isMaintenanceDueProperty() {
+  QueryBuilder<Component, bool, QQueryOperations> isMountedProperty() {
     return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'isMaintenanceDue');
+      return query.addPropertyName(r'isMounted');
     });
   }
 
-  QueryBuilder<Component, DateTime, QQueryOperations>
+  QueryBuilder<Component, DateTime?, QQueryOperations>
       lastMaintenanceDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'lastMaintenanceDate');
@@ -823,6 +1344,12 @@ extension ComponentQueryProperty
     });
   }
 
+  QueryBuilder<Component, String?, QQueryOperations> modelDetailsProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'modelDetails');
+    });
+  }
+
   QueryBuilder<Component, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
@@ -832,6 +1359,18 @@ extension ComponentQueryProperty
   QueryBuilder<Component, DateTime, QQueryOperations> purchaseDateProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'purchaseDate');
+    });
+  }
+
+  QueryBuilder<Component, String?, QQueryOperations> typeProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'type');
+    });
+  }
+
+  QueryBuilder<Component, DateTime?, QQueryOperations> unmountedDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'unmountedDate');
     });
   }
 }
