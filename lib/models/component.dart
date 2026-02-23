@@ -9,6 +9,7 @@ class Component {
   late String name;
   int? maintenanceIntervalDays; 
   DateTime lastMaintenanceDate = DateTime.now();
+  DateTime purchaseDate = DateTime.now();
   
   final bike = IsarLink<Bike>();
 

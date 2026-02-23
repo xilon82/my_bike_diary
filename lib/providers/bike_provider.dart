@@ -3,12 +3,13 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/bike.dart';
 import '../models/component.dart';
+
 import '../services/isar_service.dart';
 
 final isarProvider = Provider<Future<Isar>>((ref) async {
   final dir = await getApplicationDocumentsDirectory();
   final isar = await Isar.open(
-    [BikeSchema, ComponentSchema],
+    [BikeSchema, ComponentSchema, ServiceHistorySchema],
     directory: dir.path,
   );
 
@@ -28,4 +29,9 @@ final bikesProvider = StreamProvider<List<Bike>>((ref) {
 
 final componentsProvider = StreamProvider.family<List<Component>, int>((ref, bikeId) {
   return ref.watch(isarServiceProvider).listenToComponents(bikeId);
+});
+
+// E aggiungi il provider per la lista interventi
+final serviceHistoryProvider = StreamProvider.family<List<ServiceHistory>, int>((ref, bikeId) {
+  return ref.watch(isarServiceProvider).listenToServiceHistory(bikeId);
 });

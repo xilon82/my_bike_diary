@@ -17,25 +17,25 @@ const BikeSchema = CollectionSchema(
   name: r'Bike',
   id: -6193120535060146724,
   properties: {
-    r'brand': PropertySchema(
+    r'age': PropertySchema(
       id: 0,
+      name: r'age',
+      type: IsarType.string,
+    ),
+    r'brand': PropertySchema(
+      id: 1,
       name: r'brand',
       type: IsarType.string,
     ),
     r'name': PropertySchema(
-      id: 1,
+      id: 2,
       name: r'name',
       type: IsarType.string,
     ),
     r'purchaseDate': PropertySchema(
-      id: 2,
+      id: 3,
       name: r'purchaseDate',
       type: IsarType.dateTime,
-    ),
-    r'totalKm': PropertySchema(
-      id: 3,
-      name: r'totalKm',
-      type: IsarType.double,
     ),
     r'type': PropertySchema(
       id: 4,
@@ -56,6 +56,13 @@ const BikeSchema = CollectionSchema(
       target: r'Component',
       single: false,
       linkName: r'bike',
+    ),
+    r'serviceHistory': LinkSchema(
+      id: 5033820010159586338,
+      name: r'serviceHistory',
+      target: r'ServiceHistory',
+      single: false,
+      linkName: r'bike',
     )
   },
   embeddedSchemas: {},
@@ -71,6 +78,7 @@ int _bikeEstimateSize(
   Map<Type, List<int>> allOffsets,
 ) {
   var bytesCount = offsets.last;
+  bytesCount += 3 + object.age.length * 3;
   {
     final value = object.brand;
     if (value != null) {
@@ -88,10 +96,10 @@ void _bikeSerialize(
   List<int> offsets,
   Map<Type, List<int>> allOffsets,
 ) {
-  writer.writeString(offsets[0], object.brand);
-  writer.writeString(offsets[1], object.name);
-  writer.writeDateTime(offsets[2], object.purchaseDate);
-  writer.writeDouble(offsets[3], object.totalKm);
+  writer.writeString(offsets[0], object.age);
+  writer.writeString(offsets[1], object.brand);
+  writer.writeString(offsets[2], object.name);
+  writer.writeDateTime(offsets[3], object.purchaseDate);
   writer.writeString(offsets[4], object.type);
 }
 
@@ -102,11 +110,10 @@ Bike _bikeDeserialize(
   Map<Type, List<int>> allOffsets,
 ) {
   final object = Bike();
-  object.brand = reader.readStringOrNull(offsets[0]);
+  object.brand = reader.readStringOrNull(offsets[1]);
   object.id = id;
-  object.name = reader.readString(offsets[1]);
-  object.purchaseDate = reader.readDateTime(offsets[2]);
-  object.totalKm = reader.readDouble(offsets[3]);
+  object.name = reader.readString(offsets[2]);
+  object.purchaseDate = reader.readDateTime(offsets[3]);
   object.type = reader.readString(offsets[4]);
   return object;
 }
@@ -119,13 +126,13 @@ P _bikeDeserializeProp<P>(
 ) {
   switch (propertyId) {
     case 0:
-      return (reader.readStringOrNull(offset)) as P;
-    case 1:
       return (reader.readString(offset)) as P;
+    case 1:
+      return (reader.readStringOrNull(offset)) as P;
     case 2:
-      return (reader.readDateTime(offset)) as P;
+      return (reader.readString(offset)) as P;
     case 3:
-      return (reader.readDouble(offset)) as P;
+      return (reader.readDateTime(offset)) as P;
     case 4:
       return (reader.readString(offset)) as P;
     default:
@@ -138,13 +145,15 @@ Id _bikeGetId(Bike object) {
 }
 
 List<IsarLinkBase<dynamic>> _bikeGetLinks(Bike object) {
-  return [object.components];
+  return [object.components, object.serviceHistory];
 }
 
 void _bikeAttach(IsarCollection<dynamic> col, Id id, Bike object) {
   object.id = id;
   object.components
       .attach(col, col.isar.collection<Component>(), r'components', id);
+  object.serviceHistory.attach(
+      col, col.isar.collection<ServiceHistory>(), r'serviceHistory', id);
 }
 
 extension BikeQueryWhereSort on QueryBuilder<Bike, Bike, QWhere> {
@@ -223,6 +232,134 @@ extension BikeQueryWhere on QueryBuilder<Bike, Bike, QWhereClause> {
 }
 
 extension BikeQueryFilter on QueryBuilder<Bike, Bike, QFilterCondition> {
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'age',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageContains(String value,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'age',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageMatches(String pattern,
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'age',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'age',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> ageIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'age',
+        value: '',
+      ));
+    });
+  }
+
   QueryBuilder<Bike, Bike, QAfterFilterCondition> brandIsNull() {
     return QueryBuilder.apply(this, (query) {
       return query.addFilterCondition(const FilterCondition.isNull(
@@ -600,68 +737,6 @@ extension BikeQueryFilter on QueryBuilder<Bike, Bike, QFilterCondition> {
     });
   }
 
-  QueryBuilder<Bike, Bike, QAfterFilterCondition> totalKmEqualTo(
-    double value, {
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.equalTo(
-        property: r'totalKm',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<Bike, Bike, QAfterFilterCondition> totalKmGreaterThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.greaterThan(
-        include: include,
-        property: r'totalKm',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<Bike, Bike, QAfterFilterCondition> totalKmLessThan(
-    double value, {
-    bool include = false,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.lessThan(
-        include: include,
-        property: r'totalKm',
-        value: value,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
-  QueryBuilder<Bike, Bike, QAfterFilterCondition> totalKmBetween(
-    double lower,
-    double upper, {
-    bool includeLower = true,
-    bool includeUpper = true,
-    double epsilon = Query.epsilon,
-  }) {
-    return QueryBuilder.apply(this, (query) {
-      return query.addFilterCondition(FilterCondition.between(
-        property: r'totalKm',
-        lower: lower,
-        includeLower: includeLower,
-        upper: upper,
-        includeUpper: includeUpper,
-        epsilon: epsilon,
-      ));
-    });
-  }
-
   QueryBuilder<Bike, Bike, QAfterFilterCondition> typeEqualTo(
     String value, {
     bool caseSensitive = true,
@@ -849,9 +924,78 @@ extension BikeQueryLinks on QueryBuilder<Bike, Bike, QFilterCondition> {
           r'components', lower, includeLower, upper, includeUpper);
     });
   }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistory(
+      FilterQuery<ServiceHistory> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'serviceHistory');
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistoryLengthEqualTo(
+      int length) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'serviceHistory', length, true, length, true);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistoryIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'serviceHistory', 0, true, 0, true);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistoryIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'serviceHistory', 0, false, 999999, true);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistoryLengthLessThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'serviceHistory', 0, true, length, include);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition>
+      serviceHistoryLengthGreaterThan(
+    int length, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'serviceHistory', length, include, 999999, true);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterFilterCondition> serviceHistoryLengthBetween(
+    int lower,
+    int upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(
+          r'serviceHistory', lower, includeLower, upper, includeUpper);
+    });
+  }
 }
 
 extension BikeQuerySortBy on QueryBuilder<Bike, Bike, QSortBy> {
+  QueryBuilder<Bike, Bike, QAfterSortBy> sortByAge() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'age', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterSortBy> sortByAgeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'age', Sort.desc);
+    });
+  }
+
   QueryBuilder<Bike, Bike, QAfterSortBy> sortByBrand() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'brand', Sort.asc);
@@ -888,18 +1032,6 @@ extension BikeQuerySortBy on QueryBuilder<Bike, Bike, QSortBy> {
     });
   }
 
-  QueryBuilder<Bike, Bike, QAfterSortBy> sortByTotalKm() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'totalKm', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Bike, Bike, QAfterSortBy> sortByTotalKmDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'totalKm', Sort.desc);
-    });
-  }
-
   QueryBuilder<Bike, Bike, QAfterSortBy> sortByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -914,6 +1046,18 @@ extension BikeQuerySortBy on QueryBuilder<Bike, Bike, QSortBy> {
 }
 
 extension BikeQuerySortThenBy on QueryBuilder<Bike, Bike, QSortThenBy> {
+  QueryBuilder<Bike, Bike, QAfterSortBy> thenByAge() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'age', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Bike, Bike, QAfterSortBy> thenByAgeDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'age', Sort.desc);
+    });
+  }
+
   QueryBuilder<Bike, Bike, QAfterSortBy> thenByBrand() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'brand', Sort.asc);
@@ -962,18 +1106,6 @@ extension BikeQuerySortThenBy on QueryBuilder<Bike, Bike, QSortThenBy> {
     });
   }
 
-  QueryBuilder<Bike, Bike, QAfterSortBy> thenByTotalKm() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'totalKm', Sort.asc);
-    });
-  }
-
-  QueryBuilder<Bike, Bike, QAfterSortBy> thenByTotalKmDesc() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addSortBy(r'totalKm', Sort.desc);
-    });
-  }
-
   QueryBuilder<Bike, Bike, QAfterSortBy> thenByType() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'type', Sort.asc);
@@ -988,6 +1120,13 @@ extension BikeQuerySortThenBy on QueryBuilder<Bike, Bike, QSortThenBy> {
 }
 
 extension BikeQueryWhereDistinct on QueryBuilder<Bike, Bike, QDistinct> {
+  QueryBuilder<Bike, Bike, QDistinct> distinctByAge(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'age', caseSensitive: caseSensitive);
+    });
+  }
+
   QueryBuilder<Bike, Bike, QDistinct> distinctByBrand(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1008,12 +1147,6 @@ extension BikeQueryWhereDistinct on QueryBuilder<Bike, Bike, QDistinct> {
     });
   }
 
-  QueryBuilder<Bike, Bike, QDistinct> distinctByTotalKm() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addDistinctBy(r'totalKm');
-    });
-  }
-
   QueryBuilder<Bike, Bike, QDistinct> distinctByType(
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
@@ -1026,6 +1159,12 @@ extension BikeQueryProperty on QueryBuilder<Bike, Bike, QQueryProperty> {
   QueryBuilder<Bike, int, QQueryOperations> idProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<Bike, String, QQueryOperations> ageProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'age');
     });
   }
 
@@ -1047,15 +1186,869 @@ extension BikeQueryProperty on QueryBuilder<Bike, Bike, QQueryProperty> {
     });
   }
 
-  QueryBuilder<Bike, double, QQueryOperations> totalKmProperty() {
-    return QueryBuilder.apply(this, (query) {
-      return query.addPropertyName(r'totalKm');
-    });
-  }
-
   QueryBuilder<Bike, String, QQueryOperations> typeProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'type');
+    });
+  }
+}
+
+// coverage:ignore-file
+// ignore_for_file: duplicate_ignore, non_constant_identifier_names, constant_identifier_names, invalid_use_of_protected_member, unnecessary_cast, prefer_const_constructors, lines_longer_than_80_chars, require_trailing_commas, inference_failure_on_function_invocation, unnecessary_parenthesis, unnecessary_raw_strings, unnecessary_null_checks, join_return_with_assignment, prefer_final_locals, avoid_js_rounded_ints, avoid_positional_boolean_parameters, always_specify_types
+
+extension GetServiceHistoryCollection on Isar {
+  IsarCollection<ServiceHistory> get serviceHistorys => this.collection();
+}
+
+const ServiceHistorySchema = CollectionSchema(
+  name: r'ServiceHistory',
+  id: 5350713024092406060,
+  properties: {
+    r'cost': PropertySchema(
+      id: 0,
+      name: r'cost',
+      type: IsarType.double,
+    ),
+    r'date': PropertySchema(
+      id: 1,
+      name: r'date',
+      type: IsarType.dateTime,
+    ),
+    r'description': PropertySchema(
+      id: 2,
+      name: r'description',
+      type: IsarType.string,
+    ),
+    r'location': PropertySchema(
+      id: 3,
+      name: r'location',
+      type: IsarType.string,
+    )
+  },
+  estimateSize: _serviceHistoryEstimateSize,
+  serialize: _serviceHistorySerialize,
+  deserialize: _serviceHistoryDeserialize,
+  deserializeProp: _serviceHistoryDeserializeProp,
+  idName: r'id',
+  indexes: {},
+  links: {
+    r'bike': LinkSchema(
+      id: 5691740738657492579,
+      name: r'bike',
+      target: r'Bike',
+      single: true,
+    )
+  },
+  embeddedSchemas: {},
+  getId: _serviceHistoryGetId,
+  getLinks: _serviceHistoryGetLinks,
+  attach: _serviceHistoryAttach,
+  version: '3.1.0+1',
+);
+
+int _serviceHistoryEstimateSize(
+  ServiceHistory object,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  var bytesCount = offsets.last;
+  bytesCount += 3 + object.description.length * 3;
+  bytesCount += 3 + object.location.length * 3;
+  return bytesCount;
+}
+
+void _serviceHistorySerialize(
+  ServiceHistory object,
+  IsarWriter writer,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  writer.writeDouble(offsets[0], object.cost);
+  writer.writeDateTime(offsets[1], object.date);
+  writer.writeString(offsets[2], object.description);
+  writer.writeString(offsets[3], object.location);
+}
+
+ServiceHistory _serviceHistoryDeserialize(
+  Id id,
+  IsarReader reader,
+  List<int> offsets,
+  Map<Type, List<int>> allOffsets,
+) {
+  final object = ServiceHistory();
+  object.cost = reader.readDouble(offsets[0]);
+  object.date = reader.readDateTime(offsets[1]);
+  object.description = reader.readString(offsets[2]);
+  object.id = id;
+  object.location = reader.readString(offsets[3]);
+  return object;
+}
+
+P _serviceHistoryDeserializeProp<P>(
+  IsarReader reader,
+  int propertyId,
+  int offset,
+  Map<Type, List<int>> allOffsets,
+) {
+  switch (propertyId) {
+    case 0:
+      return (reader.readDouble(offset)) as P;
+    case 1:
+      return (reader.readDateTime(offset)) as P;
+    case 2:
+      return (reader.readString(offset)) as P;
+    case 3:
+      return (reader.readString(offset)) as P;
+    default:
+      throw IsarError('Unknown property with id $propertyId');
+  }
+}
+
+Id _serviceHistoryGetId(ServiceHistory object) {
+  return object.id;
+}
+
+List<IsarLinkBase<dynamic>> _serviceHistoryGetLinks(ServiceHistory object) {
+  return [object.bike];
+}
+
+void _serviceHistoryAttach(
+    IsarCollection<dynamic> col, Id id, ServiceHistory object) {
+  object.id = id;
+  object.bike.attach(col, col.isar.collection<Bike>(), r'bike', id);
+}
+
+extension ServiceHistoryQueryWhereSort
+    on QueryBuilder<ServiceHistory, ServiceHistory, QWhere> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhere> anyId() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(const IdWhereClause.any());
+    });
+  }
+}
+
+extension ServiceHistoryQueryWhere
+    on QueryBuilder<ServiceHistory, ServiceHistory, QWhereClause> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhereClause> idEqualTo(
+      Id id) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: id,
+        upper: id,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhereClause> idNotEqualTo(
+      Id id) {
+    return QueryBuilder.apply(this, (query) {
+      if (query.whereSort == Sort.asc) {
+        return query
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            )
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            );
+      } else {
+        return query
+            .addWhereClause(
+              IdWhereClause.greaterThan(lower: id, includeLower: false),
+            )
+            .addWhereClause(
+              IdWhereClause.lessThan(upper: id, includeUpper: false),
+            );
+      }
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhereClause> idGreaterThan(
+      Id id,
+      {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.greaterThan(lower: id, includeLower: include),
+      );
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhereClause> idLessThan(
+      Id id,
+      {bool include = false}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(
+        IdWhereClause.lessThan(upper: id, includeUpper: include),
+      );
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterWhereClause> idBetween(
+    Id lowerId,
+    Id upperId, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addWhereClause(IdWhereClause.between(
+        lower: lowerId,
+        includeLower: includeLower,
+        upper: upperId,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+}
+
+extension ServiceHistoryQueryFilter
+    on QueryBuilder<ServiceHistory, ServiceHistory, QFilterCondition> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      costEqualTo(
+    double value, {
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'cost',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      costGreaterThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'cost',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      costLessThan(
+    double value, {
+    bool include = false,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'cost',
+        value: value,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      costBetween(
+    double lower,
+    double upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    double epsilon = Query.epsilon,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'cost',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        epsilon: epsilon,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      dateEqualTo(DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      dateGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      dateLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'date',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      dateBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'date',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'description',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'description',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'description',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'description',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      descriptionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'description',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition> idEqualTo(
+      Id value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      idGreaterThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      idLessThan(
+    Id value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'id',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition> idBetween(
+    Id lower,
+    Id upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'id',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationEqualTo(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationGreaterThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationLessThan(
+    String value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationBetween(
+    String lower,
+    String upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'location',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.startsWith(
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.endsWith(
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationContains(String value, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.contains(
+        property: r'location',
+        value: value,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationMatches(String pattern, {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.matches(
+        property: r'location',
+        wildcard: pattern,
+        caseSensitive: caseSensitive,
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'location',
+        value: '',
+      ));
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      locationIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        property: r'location',
+        value: '',
+      ));
+    });
+  }
+}
+
+extension ServiceHistoryQueryObject
+    on QueryBuilder<ServiceHistory, ServiceHistory, QFilterCondition> {}
+
+extension ServiceHistoryQueryLinks
+    on QueryBuilder<ServiceHistory, ServiceHistory, QFilterCondition> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition> bike(
+      FilterQuery<Bike> q) {
+    return QueryBuilder.apply(this, (query) {
+      return query.link(q, r'bike');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterFilterCondition>
+      bikeIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.linkLength(r'bike', 0, true, 0, true);
+    });
+  }
+}
+
+extension ServiceHistoryQuerySortBy
+    on QueryBuilder<ServiceHistory, ServiceHistory, QSortBy> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> sortByCost() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cost', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> sortByCostDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cost', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> sortByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> sortByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      sortByDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      sortByDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> sortByLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'location', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      sortByLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'location', Sort.desc);
+    });
+  }
+}
+
+extension ServiceHistoryQuerySortThenBy
+    on QueryBuilder<ServiceHistory, ServiceHistory, QSortThenBy> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByCost() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cost', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByCostDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'cost', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'date', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      thenByDescription() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      thenByDescriptionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'description', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenById() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByIdDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'id', Sort.desc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy> thenByLocation() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'location', Sort.asc);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QAfterSortBy>
+      thenByLocationDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'location', Sort.desc);
+    });
+  }
+}
+
+extension ServiceHistoryQueryWhereDistinct
+    on QueryBuilder<ServiceHistory, ServiceHistory, QDistinct> {
+  QueryBuilder<ServiceHistory, ServiceHistory, QDistinct> distinctByCost() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'cost');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QDistinct> distinctByDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'date');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QDistinct> distinctByDescription(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'description', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<ServiceHistory, ServiceHistory, QDistinct> distinctByLocation(
+      {bool caseSensitive = true}) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'location', caseSensitive: caseSensitive);
+    });
+  }
+}
+
+extension ServiceHistoryQueryProperty
+    on QueryBuilder<ServiceHistory, ServiceHistory, QQueryProperty> {
+  QueryBuilder<ServiceHistory, int, QQueryOperations> idProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'id');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, double, QQueryOperations> costProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'cost');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, DateTime, QQueryOperations> dateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'date');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, String, QQueryOperations> descriptionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'description');
+    });
+  }
+
+  QueryBuilder<ServiceHistory, String, QQueryOperations> locationProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'location');
     });
   }
 }

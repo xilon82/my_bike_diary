@@ -36,6 +36,11 @@ const ComponentSchema = CollectionSchema(
       id: 3,
       name: r'name',
       type: IsarType.string,
+    ),
+    r'purchaseDate': PropertySchema(
+      id: 4,
+      name: r'purchaseDate',
+      type: IsarType.dateTime,
     )
   },
   estimateSize: _componentEstimateSize,
@@ -79,6 +84,7 @@ void _componentSerialize(
   writer.writeDateTime(offsets[1], object.lastMaintenanceDate);
   writer.writeLong(offsets[2], object.maintenanceIntervalDays);
   writer.writeString(offsets[3], object.name);
+  writer.writeDateTime(offsets[4], object.purchaseDate);
 }
 
 Component _componentDeserialize(
@@ -92,6 +98,7 @@ Component _componentDeserialize(
   object.lastMaintenanceDate = reader.readDateTime(offsets[1]);
   object.maintenanceIntervalDays = reader.readLongOrNull(offsets[2]);
   object.name = reader.readString(offsets[3]);
+  object.purchaseDate = reader.readDateTime(offsets[4]);
   return object;
 }
 
@@ -110,6 +117,8 @@ P _componentDeserializeProp<P>(
       return (reader.readLongOrNull(offset)) as P;
     case 3:
       return (reader.readString(offset)) as P;
+    case 4:
+      return (reader.readDateTime(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
   }
@@ -529,6 +538,61 @@ extension ComponentQueryFilter
       ));
     });
   }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> purchaseDateEqualTo(
+      DateTime value) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.equalTo(
+        property: r'purchaseDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      purchaseDateGreaterThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.greaterThan(
+        include: include,
+        property: r'purchaseDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition>
+      purchaseDateLessThan(
+    DateTime value, {
+    bool include = false,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.lessThan(
+        include: include,
+        property: r'purchaseDate',
+        value: value,
+      ));
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterFilterCondition> purchaseDateBetween(
+    DateTime lower,
+    DateTime upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(FilterCondition.between(
+        property: r'purchaseDate',
+        lower: lower,
+        includeLower: includeLower,
+        upper: upper,
+        includeUpper: includeUpper,
+      ));
+    });
+  }
 }
 
 extension ComponentQueryObject
@@ -602,6 +666,18 @@ extension ComponentQuerySortBy on QueryBuilder<Component, Component, QSortBy> {
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByPurchaseDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchaseDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> sortByPurchaseDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchaseDate', Sort.desc);
+    });
+  }
 }
 
 extension ComponentQuerySortThenBy
@@ -669,6 +745,18 @@ extension ComponentQuerySortThenBy
       return query.addSortBy(r'name', Sort.desc);
     });
   }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByPurchaseDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchaseDate', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Component, Component, QAfterSortBy> thenByPurchaseDateDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'purchaseDate', Sort.desc);
+    });
+  }
 }
 
 extension ComponentQueryWhereDistinct
@@ -697,6 +785,12 @@ extension ComponentQueryWhereDistinct
       {bool caseSensitive = true}) {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'name', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Component, Component, QDistinct> distinctByPurchaseDate() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'purchaseDate');
     });
   }
 }
@@ -732,6 +826,12 @@ extension ComponentQueryProperty
   QueryBuilder<Component, String, QQueryOperations> nameProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'name');
+    });
+  }
+
+  QueryBuilder<Component, DateTime, QQueryOperations> purchaseDateProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'purchaseDate');
     });
   }
 }
