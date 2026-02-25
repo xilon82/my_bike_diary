@@ -1,0 +1,12 @@
+PROGETTO: Bike Maintenance App (Flutter + Isar + Riverpod)
+STATO ATTUALE:
+
+Modelli Bike e Component uniti in un unico file per facilitare le relazioni Isar.
+
+Gestione componenti avanzata: campi type, modelDetails, isMounted, unmountedDate.
+
+Logica manutenzione: calcolo basato su maintenanceIntervalDays e lastMaintenanceDate (inseribile manualmente).
+
+UI: BikeDetailsView con TabBar, gestione "Archivio" per componenti smontati.
+
+Integrazione intl per formattazione date italiane.
