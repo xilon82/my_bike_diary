@@ -28,6 +28,14 @@ class Bike {
       return "$months mes${months == 1 ? 'e' : 'i'}";
     }
   }
+
+  // Dentro la classe Bike
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'brand': brand,
+    'type': type,
+    'purchaseDate': purchaseDate.toIso8601String(),
+  };
 }
 
 @collection
@@ -43,6 +51,14 @@ class ServiceHistory {
   int? get tempId => id; // Inutile, serve solo a "muovere" il file
 
   final bike = IsarLink<Bike>(); // <--- IL GENERATORE CERCA QUESTO
+
+  // Dentro la classe ServiceHistory
+  Map<String, dynamic> toJson() => {
+    'description': description,
+    'location': location,
+    'cost': cost,
+    'date': date.toIso8601String(),
+  };
 }
 
 @collection
@@ -70,4 +86,14 @@ class BikeSetup {
       baseDate.add(Duration(days: checkIntervalDays!)),
     );
   }
+
+  // Dentro la classe BikeSetup
+  Map<String, dynamic> toJson() => {
+    'title': title,
+    'value': value,
+    'category': category,
+    'hasPeriodicCheck': hasPeriodicCheck,
+    'checkIntervalDays': checkIntervalDays,
+    'lastCheckDate': lastCheckDate?.toIso8601String(),
+  };
 }

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
 import '../models/bike.dart';
 import '../models/component.dart';
-
 import '../providers/bike_provider.dart';
 
 class BikeDetailsView extends ConsumerWidget {
@@ -14,12 +13,10 @@ class BikeDetailsView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final componentsAsync = ref.watch(componentsProvider(bike.id));
     final historyAsync = ref.watch(serviceHistoryProvider(bike.id));
-    final setupsAsync = ref.watch(
-      bikeSetupsProvider(bike.id),
-    ); // <-- Nuovo provider
+    final setupsAsync = ref.watch(bikeSetupsProvider(bike.id));
 
     return DefaultTabController(
-      length: 3, // <-- Ora abbiamo 3 tab
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(bike.name),
@@ -27,19 +24,17 @@ class BikeDetailsView extends ConsumerWidget {
             tabs: [
               Tab(icon: Icon(Icons.settings), text: "Componenti"),
               Tab(icon: Icon(Icons.history), text: "Interventi"),
-              Tab(icon: Icon(Icons.tune), text: "Setup"), // <-- Nuova Tab
+              Tab(icon: Icon(Icons.tune), text: "Setup"),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            // TAB 1: COMPONENTI
             componentsAsync.when(
               data: (list) => _buildComponentList(context, ref, list),
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text("Errore: $e")),
             ),
-            // TAB 2: INTERVENTI
             historyAsync.when(
               data: (list) => _buildList(
                 items: list,
@@ -55,7 +50,6 @@ class BikeDetailsView extends ConsumerWidget {
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text("Errore: $e")),
             ),
-            // TAB 3: SETUP
             setupsAsync.when(
               data: (list) => _buildSetupList(context, ref, list),
               loading: () => const Center(child: CircularProgressIndicator()),
@@ -73,10 +67,7 @@ class BikeDetailsView extends ConsumerWidget {
                 } else if (tabIndex == 1) {
                   _showServiceForm(context, ref);
                 } else {
-                  _showSetupForm(
-                    context,
-                    ref,
-                  ); // <-- Apre il form corretto in base alla tab
+                  _showSetupForm(context, ref);
                 }
               },
               child: const Icon(Icons.add),
@@ -87,14 +78,13 @@ class BikeDetailsView extends ConsumerWidget {
     );
   }
 
-  // --- LOGICA COMPONENTI (ATTIVI + ARCHIVIO) ---
+  // --- COMPONENTI ---
   Widget _buildComponentList(
     BuildContext context,
     WidgetRef ref,
     List<Component> items,
   ) {
     if (items.isEmpty) return const Center(child: Text("Nessun componente"));
-
     final active = items.where((c) => c.isMounted).toList();
     final archived = items.where((c) => !c.isMounted).toList();
 
@@ -151,7 +141,6 @@ class BikeDetailsView extends ConsumerWidget {
           c.name,
           style: TextStyle(
             decoration: c.isMounted ? null : TextDecoration.lineThrough,
-            fontWeight: c.isMounted ? FontWeight.w500 : FontWeight.normal,
           ),
         ),
         subtitle: Text(
@@ -163,7 +152,7 @@ class BikeDetailsView extends ConsumerWidget {
     );
   }
 
-  // --- LISTA GENERICA PER INTERVENTI ---
+  // --- LISTA GENERICA INTERVENTI ---
   Widget _buildList({
     required List<dynamic> items,
     required Function(int) onDelete,
@@ -187,7 +176,7 @@ class BikeDetailsView extends ConsumerWidget {
           child: ListTile(
             title: Text((item as ServiceHistory).description),
             subtitle: Text(subtitleBuilder(item)),
-            trailing: const Icon(Icons.chevron_right),
+            trailing: const Icon(Icons.edit, size: 18),
             onTap: () => onEdit(item),
           ),
         );
@@ -195,7 +184,7 @@ class BikeDetailsView extends ConsumerWidget {
     );
   }
 
-  // --- NUOVA LISTA PER SETUP ---
+  // --- LISTA SETUP ---
   Widget _buildSetupList(
     BuildContext context,
     WidgetRef ref,
@@ -203,7 +192,6 @@ class BikeDetailsView extends ConsumerWidget {
   ) {
     if (items.isEmpty)
       return const Center(child: Text("Nessun setup definito"));
-
     return ListView.builder(
       itemCount: items.length,
       itemBuilder: (context, index) {
@@ -239,7 +227,7 @@ class BikeDetailsView extends ConsumerWidget {
     );
   }
 
-  // --- FORM COMPONENTI ---
+  // --- FORM COMPONENTI (CORRETTO) ---
   void _showComponentForm(
     BuildContext context,
     WidgetRef ref, [
@@ -253,7 +241,6 @@ class BikeDetailsView extends ConsumerWidget {
     final daysController = TextEditingController(
       text: existing?.maintenanceIntervalDays?.toString(),
     );
-
     DateTime installDate = existing?.purchaseDate ?? bike.purchaseDate;
     DateTime? lastMaintDate = existing?.lastMaintenanceDate;
     bool isMounted = existing?.isMounted ?? true;
@@ -262,15 +249,19 @@ class BikeDetailsView extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -279,7 +270,10 @@ class BikeDetailsView extends ConsumerWidget {
                     existing == null
                         ? "Nuovo Componente"
                         : "Modifica Componente",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   TextField(
                     controller: nameController,
@@ -306,24 +300,17 @@ class BikeDetailsView extends ConsumerWidget {
                     ),
                     keyboardType: TextInputType.number,
                   ),
-
                   SwitchListTile(
                     title: const Text("Componente montato"),
                     value: isMounted,
-                    onChanged: (val) {
-                      setState(() {
-                        isMounted = val;
-                        if (!val)
-                          unmountedDate = DateTime.now();
-                        else
-                          unmountedDate = null;
-                      });
-                    },
+                    onChanged: (val) => setState(() {
+                      isMounted = val;
+                      unmountedDate = val ? null : DateTime.now();
+                    }),
                   ),
-
                   ListTile(
                     title: Text(
-                      "Data installazione: ${DateFormat('dd/MM/yyyy').format(installDate)}",
+                      "Installazione: ${DateFormat('dd/MM/yyyy').format(installDate)}",
                     ),
                     trailing: const Icon(Icons.calendar_today),
                     onTap: () async {
@@ -336,77 +323,40 @@ class BikeDetailsView extends ConsumerWidget {
                       if (picked != null) setState(() => installDate = picked);
                     },
                   ),
-
-                  ListTile(
-                    title: Text(
-                      "Ultima manutenzione: ${lastMaintDate == null ? 'Coincide con installazione' : DateFormat('dd/MM/yyyy').format(lastMaintDate!)}",
-                    ),
-                    subtitle: const Text(
-                      "Seleziona se diversa dalla data installazione",
-                    ),
-                    trailing: const Icon(Icons.build_circle_outlined),
-                    onTap: () async {
-                      final picked = await showDatePicker(
-                        context: context,
-                        initialDate: lastMaintDate ?? installDate,
-                        firstDate: DateTime(2000),
-                        lastDate: DateTime.now(),
-                      );
-                      if (picked != null)
-                        setState(() => lastMaintDate = picked);
-                    },
-                  ),
-
-                  if (!isMounted)
-                    ListTile(
-                      title: Text(
-                        "Data smontaggio: ${unmountedDate != null ? DateFormat('dd/MM/yyyy').format(unmountedDate!) : '-'}",
-                      ),
-                      textColor: Colors.red,
-                      trailing: const Icon(Icons.event_busy, color: Colors.red),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: unmountedDate ?? DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final c = existing ?? Component();
+                        c.name = nameController.text;
+                        c.type = typeController.text;
+                        c.modelDetails = detailsController.text;
+                        c.maintenanceIntervalDays = int.tryParse(
+                          daysController.text,
                         );
-                        if (picked != null)
-                          setState(() => unmountedDate = picked);
+                        c.purchaseDate = installDate;
+                        c.lastMaintenanceDate = lastMaintDate;
+                        c.isMounted = isMounted;
+                        c.unmountedDate = unmountedDate;
+                        c.bike.value = bike;
+                        ref.read(isarServiceProvider).saveComponent(c);
+                        Navigator.pop(context);
                       },
+                      child: const Text("Salva"),
                     ),
-
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      final c = existing ?? Component();
-                      c.name = nameController.text;
-                      c.type = typeController.text;
-                      c.modelDetails = detailsController.text;
-                      c.maintenanceIntervalDays = int.tryParse(
-                        daysController.text,
-                      );
-                      c.purchaseDate = installDate;
-                      c.lastMaintenanceDate = lastMaintDate;
-                      c.isMounted = isMounted;
-                      c.unmountedDate = unmountedDate;
-                      c.bike.value = bike;
-                      ref.read(isarServiceProvider).saveComponent(c);
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Salva"),
                   ),
                   const SizedBox(height: 20),
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  // --- FORM INTERVENTI ---
+  // --- FORM INTERVENTI (CORRETTO) ---
   void _showServiceForm(
     BuildContext context,
     WidgetRef ref, [
@@ -422,76 +372,88 @@ class BikeDetailsView extends ConsumerWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 20,
-              right: 20,
-              top: 20,
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    existing == null
+                        ? "Nuovo Intervento"
+                        : "Modifica Intervento",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  TextField(
+                    controller: descController,
+                    decoration: const InputDecoration(labelText: "Descrizione"),
+                  ),
+                  TextField(
+                    controller: locController,
+                    decoration: const InputDecoration(labelText: "Luogo"),
+                  ),
+                  TextField(
+                    controller: costController,
+                    decoration: const InputDecoration(labelText: "Costo (€)"),
+                    keyboardType: TextInputType.number,
+                  ),
+                  ListTile(
+                    title: Text(
+                      "Data: ${DateFormat('dd/MM/yyyy').format(selectedDate)}",
+                    ),
+                    trailing: const Icon(Icons.calendar_today),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: selectedDate,
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null) setState(() => selectedDate = picked);
+                    },
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        final s = existing ?? ServiceHistory();
+                        s.description = descController.text;
+                        s.location = locController.text;
+                        s.cost = double.tryParse(costController.text) ?? 0.0;
+                        s.date = selectedDate;
+                        s.bike.value = bike;
+                        ref.read(isarServiceProvider).saveServiceHistory(s);
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Salva"),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              ),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  existing == null ? "Nuovo Intervento" : "Modifica Intervento",
-                ),
-                TextField(
-                  controller: descController,
-                  decoration: const InputDecoration(
-                    labelText: "Cosa è stato fatto?",
-                  ),
-                ),
-                TextField(
-                  controller: locController,
-                  decoration: const InputDecoration(
-                    labelText: "Dove? (es. Officina)",
-                  ),
-                ),
-                TextField(
-                  controller: costController,
-                  decoration: const InputDecoration(labelText: "Costo (€)"),
-                  keyboardType: TextInputType.number,
-                ),
-                ListTile(
-                  title: Text(
-                    "Data: ${DateFormat('dd/MM/yyyy').format(selectedDate)}",
-                  ),
-                  trailing: const Icon(Icons.calendar_today),
-                  onTap: () async {
-                    final picked = await showDatePicker(
-                      context: context,
-                      initialDate: selectedDate,
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime.now(),
-                    );
-                    if (picked != null) setState(() => selectedDate = picked);
-                  },
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    final s = existing ?? ServiceHistory();
-                    s.description = descController.text;
-                    s.location = locController.text;
-                    s.cost = double.tryParse(costController.text) ?? 0.0;
-                    s.date = selectedDate;
-                    s.bike.value = bike;
-                    ref.read(isarServiceProvider).saveServiceHistory(s);
-                    Navigator.pop(context);
-                  },
-                  child: const Text("Salva"),
-                ),
-                const SizedBox(height: 20),
-              ],
-            ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
 
-  // --- NUOVO FORM SETUP ---
+  // --- FORM SETUP (CORRETTO) ---
   void _showSetupForm(
     BuildContext context,
     WidgetRef ref, [
@@ -503,121 +465,94 @@ class BikeDetailsView extends ConsumerWidget {
     final daysController = TextEditingController(
       text: existing?.checkIntervalDays?.toString(),
     );
-
     bool hasCheck = existing?.hasPeriodicCheck ?? false;
     DateTime? lastCheckDate = existing?.lastCheckDate;
 
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) {
-          return Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
+        builder: (context, setState) => Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+            left: 20,
+            right: 20,
+            top: 20,
+          ),
+          child: SafeArea(
             child: SingleChildScrollView(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    existing == null
-                        ? "Nuovo Parametro Setup"
-                        : "Modifica Setup",
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                    existing == null ? "Nuovo Parametro" : "Modifica Setup",
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
                   ),
                   TextField(
                     controller: titleController,
                     decoration: const InputDecoration(
-                      labelText: "Cosa (es. Pressione Forcella)",
+                      labelText: "Titolo (es. Pressione)",
                     ),
                   ),
                   TextField(
                     controller: valueController,
-                    decoration: const InputDecoration(
-                      labelText: "Valore (es. 85 psi)",
-                    ),
+                    decoration: const InputDecoration(labelText: "Valore"),
                   ),
                   TextField(
                     controller: categoryController,
-                    decoration: const InputDecoration(
-                      labelText: "Categoria (es. Sospensioni)",
-                    ),
+                    decoration: const InputDecoration(labelText: "Categoria"),
                   ),
-
-                  const Divider(height: 30),
-
                   SwitchListTile(
-                    title: const Text("Attiva controllo periodico"),
-                    subtitle: const Text(
-                      "Vuoi ricevere un promemoria per controllare questo valore?",
-                    ),
+                    title: const Text("Controllo periodico"),
                     value: hasCheck,
-                    onChanged: (val) {
-                      setState(() {
-                        hasCheck = val;
-                        if (val && lastCheckDate == null) {
-                          lastCheckDate = DateTime.now();
-                        }
-                      });
-                    },
+                    onChanged: (val) => setState(() {
+                      hasCheck = val;
+                      if (val && lastCheckDate == null)
+                        lastCheckDate = DateTime.now();
+                    }),
                   ),
-
                   if (hasCheck) ...[
                     TextField(
                       controller: daysController,
                       decoration: const InputDecoration(
-                        labelText: "Controlla ogni (giorni)",
+                        labelText: "Ogni (giorni)",
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    ListTile(
-                      title: Text(
-                        "Ultimo controllo: ${lastCheckDate != null ? DateFormat('dd/MM/yyyy').format(lastCheckDate!) : '-'}",
-                      ),
-                      trailing: const Icon(Icons.calendar_today),
-                      onTap: () async {
-                        final picked = await showDatePicker(
-                          context: context,
-                          initialDate: lastCheckDate ?? DateTime.now(),
-                          firstDate: DateTime(2000),
-                          lastDate: DateTime.now(),
-                        );
-                        if (picked != null)
-                          setState(() => lastCheckDate = picked);
-                      },
-                    ),
                   ],
-
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: () {
-                      if (titleController.text.isEmpty)
-                        return; // Evita salvataggi a vuoto
-
-                      final s = existing ?? BikeSetup();
-                      s.title = titleController.text;
-                      s.value = valueController.text;
-                      s.category = categoryController.text;
-                      s.hasPeriodicCheck = hasCheck;
-                      s.checkIntervalDays = int.tryParse(daysController.text);
-                      s.lastCheckDate = lastCheckDate;
-                      s.bike.value = bike;
-
-                      ref.read(isarServiceProvider).saveBikeSetup(s);
-                      Navigator.pop(context);
-                    },
-                    child: const Text("Salva"),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        if (titleController.text.isEmpty) return;
+                        final s = existing ?? BikeSetup();
+                        s.title = titleController.text;
+                        s.value = valueController.text;
+                        s.category = categoryController.text;
+                        s.hasPeriodicCheck = hasCheck;
+                        s.checkIntervalDays = int.tryParse(daysController.text);
+                        s.lastCheckDate = lastCheckDate;
+                        s.bike.value = bike;
+                        ref.read(isarServiceProvider).saveBikeSetup(s);
+                        Navigator.pop(context);
+                      },
+                      child: const Text("Salva"),
+                    ),
                   ),
                   const SizedBox(height: 20),
                 ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
