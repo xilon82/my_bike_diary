@@ -143,8 +143,24 @@ class BikeDetailsView extends ConsumerWidget {
             decoration: c.isMounted ? null : TextDecoration.lineThrough,
           ),
         ),
-        subtitle: Text(
-          "${c.type ?? 'Componente'} • ${c.modelDetails ?? 'Nessun dettaglio'}",
+        // --- SOTTOTITOLO ARRICCHITO CON LE DATE ---
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${c.type ?? 'Componente'} • ${c.modelDetails ?? 'Nessun dettaglio'}",
+            ),
+            if (c.lastMaintenanceDate != null)
+              Text(
+                "Ultima man: ${DateFormat('dd/MM/yyyy').format(c.lastMaintenanceDate!)}",
+                style: const TextStyle(fontSize: 12, color: Colors.blueGrey),
+              ),
+            if (!c.isMounted && c.unmountedDate != null)
+              Text(
+                "Smontato il: ${DateFormat('dd/MM/yyyy').format(c.unmountedDate!)}",
+                style: const TextStyle(fontSize: 12, color: Colors.redAccent),
+              ),
+          ],
         ),
         trailing: const Icon(Icons.edit, size: 18),
         onTap: () => _showComponentForm(context, ref, c),
@@ -185,6 +201,7 @@ class BikeDetailsView extends ConsumerWidget {
   }
 
   // --- LISTA SETUP ---
+  // --- LISTA SETUP ---
   Widget _buildSetupList(
     BuildContext context,
     WidgetRef ref,
@@ -216,8 +233,23 @@ class BikeDetailsView extends ConsumerWidget {
               setup.title,
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
-            subtitle: Text(
-              "${setup.category ?? 'Generale'} • Valore: ${setup.value ?? '-'}",
+
+            // --- SOTTOTITOLO AGGIORNATO CON DATA ULTIMO CONTROLLO ---
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "${setup.category ?? 'Generale'} • Valore: ${setup.value ?? '-'}",
+                ),
+                if (setup.hasPeriodicCheck && setup.lastCheckDate != null)
+                  Text(
+                    "Ultimo controllo: ${DateFormat('dd/MM/yyyy').format(setup.lastCheckDate!)}",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: setup.isCheckDue ? Colors.orange : Colors.green,
+                    ),
+                  ),
+              ],
             ),
             trailing: const Icon(Icons.edit, size: 18),
             onTap: () => _showSetupForm(context, ref, setup),
@@ -241,6 +273,7 @@ class BikeDetailsView extends ConsumerWidget {
     final daysController = TextEditingController(
       text: existing?.maintenanceIntervalDays?.toString(),
     );
+
     DateTime installDate = existing?.purchaseDate ?? bike.purchaseDate;
     DateTime? lastMaintDate = existing?.lastMaintenanceDate;
     bool isMounted = existing?.isMounted ?? true;
@@ -300,15 +333,22 @@ class BikeDetailsView extends ConsumerWidget {
                     ),
                     keyboardType: TextInputType.number,
                   ),
+
+                  // --- SWITCH MONTAGGIO ---
                   SwitchListTile(
                     title: const Text("Componente montato"),
                     value: isMounted,
                     onChanged: (val) => setState(() {
                       isMounted = val;
-                      unmountedDate = val ? null : DateTime.now();
+                      unmountedDate = val
+                          ? null
+                          : (unmountedDate ?? DateTime.now());
                     }),
                   ),
+
+                  // --- DATA INSTALLAZIONE ---
                   ListTile(
+                    contentPadding: EdgeInsets.zero,
                     title: Text(
                       "Installazione: ${DateFormat('dd/MM/yyyy').format(installDate)}",
                     ),
@@ -323,6 +363,61 @@ class BikeDetailsView extends ConsumerWidget {
                       if (picked != null) setState(() => installDate = picked);
                     },
                   ),
+
+                  // --- DATA ULTIMA MANUTENZIONE ---
+                  ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      lastMaintDate == null
+                          ? "Ultima manutenzione: Mai"
+                          : "Ultima manutenzione: ${DateFormat('dd/MM/yyyy').format(lastMaintDate!)}",
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (lastMaintDate != null)
+                          IconButton(
+                            icon: const Icon(Icons.clear, size: 20),
+                            onPressed: () =>
+                                setState(() => lastMaintDate = null),
+                          ),
+                        const Icon(Icons.build),
+                      ],
+                    ),
+                    onTap: () async {
+                      final picked = await showDatePicker(
+                        context: context,
+                        initialDate: lastMaintDate ?? DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime.now(),
+                      );
+                      if (picked != null)
+                        setState(() => lastMaintDate = picked);
+                    },
+                  ),
+
+                  // --- DATA SMONTAGGIO (Visibile solo se smontato) ---
+                  if (!isMounted)
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        unmountedDate == null
+                            ? "Data smontaggio: Sconosciuta"
+                            : "Data smontaggio: ${DateFormat('dd/MM/yyyy').format(unmountedDate!)}",
+                      ),
+                      trailing: const Icon(Icons.event_busy),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: unmountedDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null)
+                          setState(() => unmountedDate = picked);
+                      },
+                    ),
+
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -336,9 +431,11 @@ class BikeDetailsView extends ConsumerWidget {
                           daysController.text,
                         );
                         c.purchaseDate = installDate;
-                        c.lastMaintenanceDate = lastMaintDate;
+                        c.lastMaintenanceDate =
+                            lastMaintDate; // SALVA LA DATA DI MANUTENZIONE
                         c.isMounted = isMounted;
-                        c.unmountedDate = unmountedDate;
+                        c.unmountedDate =
+                            unmountedDate; // SALVA LA DATA DI SMONTAGGIO
                         c.bike.value = bike;
                         ref.read(isarServiceProvider).saveComponent(c);
                         Navigator.pop(context);
@@ -454,6 +551,7 @@ class BikeDetailsView extends ConsumerWidget {
   }
 
   // --- FORM SETUP (CORRETTO) ---
+  // --- FORM SETUP ---
   void _showSetupForm(
     BuildContext context,
     WidgetRef ref, [
@@ -465,6 +563,7 @@ class BikeDetailsView extends ConsumerWidget {
     final daysController = TextEditingController(
       text: existing?.checkIntervalDays?.toString(),
     );
+
     bool hasCheck = existing?.hasPeriodicCheck ?? false;
     DateTime? lastCheckDate = existing?.lastCheckDate;
 
@@ -498,17 +597,23 @@ class BikeDetailsView extends ConsumerWidget {
                   TextField(
                     controller: titleController,
                     decoration: const InputDecoration(
-                      labelText: "Titolo (es. Pressione)",
+                      labelText: "Titolo (es. Pressione Forcella)",
                     ),
                   ),
                   TextField(
                     controller: valueController,
-                    decoration: const InputDecoration(labelText: "Valore"),
+                    decoration: const InputDecoration(
+                      labelText: "Valore (es. 85 psi)",
+                    ),
                   ),
                   TextField(
                     controller: categoryController,
-                    decoration: const InputDecoration(labelText: "Categoria"),
+                    decoration: const InputDecoration(
+                      labelText: "Categoria (es. Sospensioni)",
+                    ),
                   ),
+
+                  // --- SWITCH CONTROLLO PERIODICO ---
                   SwitchListTile(
                     title: const Text("Controllo periodico"),
                     value: hasCheck,
@@ -518,15 +623,50 @@ class BikeDetailsView extends ConsumerWidget {
                         lastCheckDate = DateTime.now();
                     }),
                   ),
+
+                  // --- OPZIONI VISIBILI SOLO SE IL CONTROLLO È ATTIVO ---
                   if (hasCheck) ...[
                     TextField(
                       controller: daysController,
                       decoration: const InputDecoration(
-                        labelText: "Ogni (giorni)",
+                        labelText: "Controlla ogni (giorni)",
                       ),
                       keyboardType: TextInputType.number,
                     ),
+
+                    // --- SELETTORE DATA ULTIMO CONTROLLO ---
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(
+                        lastCheckDate == null
+                            ? "Ultimo controllo: Mai"
+                            : "Ultimo controllo: ${DateFormat('dd/MM/yyyy').format(lastCheckDate!)}",
+                      ),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          if (lastCheckDate != null)
+                            IconButton(
+                              icon: const Icon(Icons.clear, size: 20),
+                              onPressed: () =>
+                                  setState(() => lastCheckDate = null),
+                            ),
+                          const Icon(Icons.fact_check),
+                        ],
+                      ),
+                      onTap: () async {
+                        final picked = await showDatePicker(
+                          context: context,
+                          initialDate: lastCheckDate ?? DateTime.now(),
+                          firstDate: DateTime(2000),
+                          lastDate: DateTime.now(),
+                        );
+                        if (picked != null)
+                          setState(() => lastCheckDate = picked);
+                      },
+                    ),
                   ],
+
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -539,7 +679,8 @@ class BikeDetailsView extends ConsumerWidget {
                         s.category = categoryController.text;
                         s.hasPeriodicCheck = hasCheck;
                         s.checkIntervalDays = int.tryParse(daysController.text);
-                        s.lastCheckDate = lastCheckDate;
+                        s.lastCheckDate =
+                            lastCheckDate; // <--- ORA VIENE SALVATO CORRETTAMENTE
                         s.bike.value = bike;
                         ref.read(isarServiceProvider).saveBikeSetup(s);
                         Navigator.pop(context);
