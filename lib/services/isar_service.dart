@@ -2,7 +2,6 @@ import 'package:isar/isar.dart';
 import '../models/bike.dart';
 import '../models/component.dart';
 
-
 class IsarService {
   final Future<Isar> db;
 
@@ -73,5 +72,29 @@ class IsarService {
   Future<void> deleteServiceHistory(int id) async {
     final isar = await db;
     await isar.writeTxn(() => isar.serviceHistorys.delete(id));
+  }
+
+  // Salva o aggiorna un setup
+  Future<void> saveBikeSetup(BikeSetup setup) async {
+    final isar = await db;
+    await isar.writeTxn(() async {
+      await isar.bikeSetups.put(setup);
+      await setup.bike.save();
+    });
+  }
+
+  // Recupera i setup di una specifica bici
+  Stream<List<BikeSetup>> getBikeSetups(int bikeId) async* {
+    final isar = await db;
+    yield* isar.bikeSetups
+        .filter()
+        .bike((q) => q.idEqualTo(bikeId))
+        .watch(fireImmediately: true);
+  }
+
+  // Elimina un setup
+  Future<void> deleteBikeSetup(int id) async {
+    final isar = await db;
+    await isar.writeTxn(() => isar.bikeSetups.delete(id));
   }
 }

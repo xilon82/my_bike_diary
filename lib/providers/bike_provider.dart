@@ -21,17 +21,18 @@ La Connessione: Questi Schema vengono generati automaticamente (nei file .g.dart
  */
 final isarProvider = Provider<Future<Isar>>((ref) async {
   final dir = await getApplicationDocumentsDirectory();
-  final isar = await Isar.open(
-    [BikeSchema, ComponentSchema, ServiceHistorySchema],
-    directory: dir.path,
-  );
+  final isar = await Isar.open([
+    BikeSchema,
+    ComponentSchema,
+    ServiceHistorySchema,
+    BikeSetupSchema,
+  ], directory: dir.path);
 
   // Inseriscilo QUI, prima del return
-  //await isar.writeTxn(() => isar.clear()); 
+  //await isar.writeTxn(() => isar.clear());
   //print("DATABASE RESETTATO CON SUCCESSO");
 
   return isar;
-
 });
 
 /* 2. Il Collegamento al Service (isarServiceProvider)
@@ -41,8 +42,9 @@ La Logica: La classe IsarService (che contiene i metodi veri e propri come saveB
 Il Codice: Provider((ref) => IsarService(ref.watch(isarProvider))).
 La Connessione: Riverpod legge il database dal primo provider (isarProvider) e lo "inietta" dentro il costruttore del tuo IsarService. Così il service è pronto all'uso.
  */
-final isarServiceProvider = Provider((ref) => IsarService(ref.watch(isarProvider)));
-
+final isarServiceProvider = Provider(
+  (ref) => IsarService(ref.watch(isarProvider)),
+);
 
 /* 3. I Flussi di Dati (bikesProvider, serviceHistoryProvider)
 Questi sono i provider che la tua UI ascolta direttamente (usando ref.watch).
@@ -61,15 +63,26 @@ final bikesProvider = StreamProvider<List<Bike>>((ref) {
   return ref.watch(isarServiceProvider).listenToBikes();
 });
 
-final componentsProvider = StreamProvider.family<List<Component>, int>((ref, bikeId) {
+final componentsProvider = StreamProvider.family<List<Component>, int>((
+  ref,
+  bikeId,
+) {
   return ref.watch(isarServiceProvider).listenToComponents(bikeId);
 });
 
 // E aggiungi il provider per la lista interventi
-final serviceHistoryProvider = StreamProvider.family<List<ServiceHistory>, int>((ref, bikeId) {
-  return ref.watch(isarServiceProvider).listenToServiceHistory(bikeId);
-});
+final serviceHistoryProvider = StreamProvider.family<List<ServiceHistory>, int>(
+  (ref, bikeId) {
+    return ref.watch(isarServiceProvider).listenToServiceHistory(bikeId);
+  },
+);
 
+final bikeSetupsProvider = StreamProvider.family<List<BikeSetup>, int>((
+  ref,
+  bikeId,
+) {
+  return ref.watch(isarServiceProvider).getBikeSetups(bikeId);
+});
 
 /* 
 SPIEGAZIONE: PERCHÉ USARE ref.watch?
